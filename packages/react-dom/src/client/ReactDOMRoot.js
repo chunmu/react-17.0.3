@@ -235,7 +235,7 @@ export function isValidContainer(node: any): boolean {
 export function isValidContainerLegacy(node: any): boolean {
   return !!(
     node &&
-    (node.nodeType === ELEMENT_NODE ||
+    (node.nodeType === ELEMENT_NODE || // 普通的dom节点 div span
       node.nodeType === DOCUMENT_NODE ||
       node.nodeType === DOCUMENT_FRAGMENT_NODE ||
       (node.nodeType === COMMENT_NODE &&
