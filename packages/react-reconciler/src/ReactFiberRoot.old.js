@@ -32,8 +32,11 @@ import {LegacyRoot, ConcurrentRoot} from './ReactRootTags';
 function FiberRootNode(containerInfo, tag, hydrate) {
   this.tag = tag;
   this.containerInfo = containerInfo;
+  // 只有在持久更新中才会用到，也就是不支持增量更新的平台会用到，react-dom不会用到
+  // 也就是不更新某一块地方，而是整个应用完全更新
   this.pendingChildren = null;
-  this.current = null;
+  // 当前fiberRoot对应的root fiber
+  this.current = null; // fiber对象 root级别的 整个应用根fiber
   this.pingCache = null;
   this.finishedWork = null;
   this.timeoutHandle = noTimeout;
@@ -94,7 +97,7 @@ function FiberRootNode(containerInfo, tag, hydrate) {
 }
 
 export function createFiberRoot(
-  containerInfo: any,
+  containerInfo: any, // dom div
   tag: RootTag,
   hydrate: boolean,
   hydrationCallbacks: null | SuspenseHydrationCallbacks,
@@ -109,12 +112,16 @@ export function createFiberRoot(
   // Cyclic construction. This cheats the type system right now because
   // stateNode is any.
   const uninitializedFiber = createHostRootFiber(
-    tag,
+    tag, 
     isStrictMode,
     concurrentUpdatesByDefaultOverride,
   );
+  //           FiberRoot
+  //          /          \
+  // current /            \
+  // uninitializedFiber树   备份fiber树
   root.current = uninitializedFiber;
-  uninitializedFiber.stateNode = root;
+  uninitializedFiber.stateNode = root; // rootFiber没有dom实体 指向FiberRoot
 
   if (enableCache) {
     const initialCache = new Map();
@@ -125,13 +132,27 @@ export function createFiberRoot(
     };
     uninitializedFiber.memoizedState = initialState;
   } else {
-    const initialState = {
-      element: null,
+    // const initialState = {
+    //   element: null,
+    // };
+    uninitializedFiber.memoizedState = {
+      element: null
     };
-    uninitializedFiber.memoizedState = initialState;
   }
 
   initializeUpdateQueue(uninitializedFiber);
+  // const queue: UpdateQueue<State> = {
+  //   baseState: fiber.memoizedState,
+  //   firstBaseUpdate: null,
+  //   lastBaseUpdate: null,
+  //   shared: {
+  //     pending: null,
+  //     interleaved: null,
+  //     lanes: NoLanes,
+  //   },
+  //   effects: null,
+  // };
+  // fiber.updateQueue = queue;
 
   return root;
 }

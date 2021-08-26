@@ -39,6 +39,7 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
    * normalizing browser quirks. Subclasses do not necessarily have to implement a
    * DOM interface; custom application-specific events can also subclass this.
    */
+  // 开始合成事件
   function SyntheticBaseEvent(
     reactName: string | null,
     reactEventType: string,
@@ -49,8 +50,8 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
     this._reactName = reactName;
     this._targetInst = targetInst;
     this.type = reactEventType;
-    this.nativeEvent = nativeEvent;
-    this.target = nativeEventTarget;
+    this.nativeEvent = nativeEvent; // 合成事件中的原生事件
+    this.target = nativeEventTarget; // target
     this.currentTarget = null;
 
     for (const propName in Interface) {
@@ -61,7 +62,7 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
       if (normalize) {
         this[propName] = normalize(nativeEvent);
       } else {
-        this[propName] = nativeEvent[propName];
+        this[propName] = nativeEvent[propName]; // 把部分原生事件的属性赋值给合成事件
       }
     }
 
@@ -79,6 +80,7 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
   }
 
   Object.assign(SyntheticBaseEvent.prototype, {
+    // 改写preventDefault
     preventDefault: function() {
       this.defaultPrevented = true;
       const event = this.nativeEvent;
@@ -95,6 +97,7 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
       this.isDefaultPrevented = functionThatReturnsTrue;
     },
 
+    // 改写阻止事件冒泡方法
     stopPropagation: function() {
       const event = this.nativeEvent;
       if (!event) {
@@ -140,14 +143,15 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
  * @see http://www.w3.org/TR/DOM-Level-3-Events/
  */
 const EventInterface = {
-  eventPhase: 0,
-  bubbles: 0,
-  cancelable: 0,
+  eventPhase: 0, // 事件阶段 捕获 冒泡 none target本身
+  // 事件阶段 捕获 => target => 冒泡(常用)
+  bubbles: 0, // 是否冒泡的事件
+  cancelable: 0, // 如果可以取消 则可以执行preventDefault阻止默认事件
   timeStamp: function(event) {
     return event.timeStamp || Date.now();
   },
-  defaultPrevented: 0,
-  isTrusted: 0,
+  defaultPrevented: 0, // preventDefault阻止默认事件
+  isTrusted: 0, // EventTarget.dispatchEvent() 由用户手动派发的事件 为false
 };
 export const SyntheticEvent = createSyntheticEvent(EventInterface);
 
@@ -433,6 +437,7 @@ const KeyboardEventInterface = {
   locale: 0,
   getModifierState: getEventModifierState,
   // Legacy Interface
+  // 复写了charCode
   charCode: function(event) {
     // `charCode` is the result of a KeyPress event and represents the value of
     // the actual printable character.
@@ -444,6 +449,7 @@ const KeyboardEventInterface = {
     }
     return 0;
   },
+  // 复写keyCode
   keyCode: function(event) {
     // `keyCode` is the result of a KeyDown/Up event and represents the value of
     // physical keyboard key.
@@ -477,6 +483,7 @@ export const SyntheticKeyboardEvent = createSyntheticEvent(
  * @interface PointerEvent
  * @see http://www.w3.org/TR/pointerevents/
  */
+// 触控操作
 const PointerEventInterface = {
   ...MouseEventInterface,
   pointerId: 0,
@@ -498,6 +505,7 @@ export const SyntheticPointerEvent = createSyntheticEvent(
  * @interface TouchEvent
  * @see http://www.w3.org/TR/touch-events/
  */
+// 点击
 const TouchEventInterface = {
   ...UIEventInterface,
   touches: 0,

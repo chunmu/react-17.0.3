@@ -49,6 +49,7 @@ import {IS_CAPTURE_PHASE} from '../EventSystemFlags';
 
 import {enableCreateEventHandleAPI} from 'shared/ReactFeatureFlags';
 
+// 对事件进行改造 会额外做些运行消耗 所以对性能有影响 很细微
 function extractEvents(
   dispatchQueue: DispatchQueue,
   domEventName: DOMEventName,
@@ -58,6 +59,7 @@ function extractEvents(
   eventSystemFlags: EventSystemFlags,
   targetContainer: EventTarget,
 ): void {
+  // etc: onClick
   const reactName = topLevelEventsToReactNames.get(domEventName);
   if (reactName === undefined) {
     return;
@@ -92,6 +94,7 @@ function extractEvents(
     case 'click':
       // Firefox creates a click event on right mouse clicks. This removes the
       // unwanted click events.
+      // 如果是右键 不处理 Firefox右键也会生成click
       if (nativeEvent.button === 2) {
         return;
       }

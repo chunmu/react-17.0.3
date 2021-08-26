@@ -104,10 +104,13 @@ function getReactRootElementInContainer(container: any) {
 }
 
 function legacyCreateRootFromDOMContainer(
-  container: Container,
+  container: Container, // doducment.getElementById('root')
   forceHydrate: boolean,
 ): FiberRoot {
   // First clear any existing content.
+  // 清空 <div id="root">里面的内容
+  // 应该是不承认这边原有的dom结构 只接受由react渲染的dom结构
+  // 其实我认为这些应该由用户保证他能做到这个基本的要求 文档里面提提就好 有效减少框架代码量
   if (!forceHydrate) {
     let rootSibling;
     while ((rootSibling = container.lastChild)) {
@@ -115,18 +118,22 @@ function legacyCreateRootFromDOMContainer(
     }
   }
 
-  const root = createContainer(
+  const root = createContainer( // FiberRoot
     container,
-    LegacyRoot,
+    LegacyRoot, // 0
     forceHydrate,
     null, // hydrationCallbacks
     false, // isStrictMode
     false, // concurrentUpdatesByDefaultOverride,
   );
+  // container['__reactContainer$xxx'] = root.current
+  // dom对象上挂载字段
   markContainerAsRoot(root.current, container);
 
+  // 不能是注释标签上渲染应用
   const rootContainerElement =
     container.nodeType === COMMENT_NODE ? container.parentNode : container;
+  // 在载入react的时候 已经注册好了所有原生事件
   listenToAllSupportedEvents(rootContainerElement);
 
   return root;
@@ -145,10 +152,11 @@ function warnOnInvalidCallback(callback: mixed, callerName: string): void {
   }
 }
 
+// 挂载子树到容器节点
 function legacyRenderSubtreeIntoContainer(
   parentComponent: ?React$Component<any, any>,
-  children: ReactNodeList,
-  container: Container,
+  children: ReactNodeList, // ReactNode
+  container: Container, // dom
   forceHydrate: boolean,
   callback: ?Function,
 ) {
@@ -157,12 +165,15 @@ function legacyRenderSubtreeIntoContainer(
     warnOnInvalidCallback(callback === undefined ? null : callback, 'render');
   }
 
-  let root = container._reactRootContainer;
+  let root = container._reactRootContainer; // root = _reactRootContainer
   let fiberRoot: FiberRoot;
+  // 整个应用的起点
+  // 包含应用挂载的目标节点
+  // 记录整个应用更新过程的各种信息
   if (!root) {
     // Initial mount
     root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
-      container,
+      container, // dom
       forceHydrate,
     );
     fiberRoot = root;
@@ -264,11 +275,22 @@ export function hydrate(
   );
 }
 
+// 入口方法 rander render(<div></div>, {})
+// 创建react整个应用顶点对象
 export function render(
   element: React$Element<any>,
   container: Container,
   callback: ?Function,
 ) {
+  if (__DEV__) {
+    console.error(
+      'ReactDOM.render is no longer supported in React 18. Use createRoot ' +
+        'instead. Until you switch to the new API, your app will behave as ' +
+        "if it's running React 17. Learn " +
+        'more: https://reactjs.org/link/switch-to-createroot',
+    );
+  }
+
   invariant(
     isValidContainerLegacy(container),
     'Target container is not a DOM element.',

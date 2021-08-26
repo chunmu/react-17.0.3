@@ -92,9 +92,9 @@ import {
   setIsStrictModeForDevtools as setIsStrictModeForDevtools_new,
 } from './ReactFiberReconciler.new';
 
-export const createContainer = enableNewReconciler
+export const createContainer = enableNewReconciler // false
   ? createContainer_new
-  : createContainer_old;
+  : createContainer_old; // 用这个createContainer_old 下面同样
 export const updateContainer = enableNewReconciler
   ? updateContainer_new
   : updateContainer_old;

@@ -17,6 +17,9 @@
  * @param {object} nativeEvent Native browser event.
  * @return {number} Normalized `charCode` property.
  */
+// 获取各个按键的keyCode
+// 小于32的有  BackSpace Tab Clear Enter Shift Control Alt CapeLock Esc 
+// 为什么不要这些 因为用不到 react框架不需要处理这些事件的逻辑
 function getEventCharCode(nativeEvent: KeyboardEvent): number {
   let charCode;
   const keyCode = nativeEvent.keyCode;

@@ -21,9 +21,13 @@ import {
 
 export opaque type EventPriority = Lane;
 
-export const DiscreteEventPriority: EventPriority = SyncLane;
+// 离散事件
+export const DiscreteEventPriority: EventPriority = SyncLane; // 0b0000000000000000000000000000001
+// 连续事件
 export const ContinuousEventPriority: EventPriority = InputContinuousLane;
+// default事件 是啥事件
 export const DefaultEventPriority: EventPriority = DefaultLane;
+// 这个不懂
 export const IdleEventPriority: EventPriority = IdleLane;
 
 let currentUpdatePriority: EventPriority = NoLane;

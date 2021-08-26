@@ -112,6 +112,7 @@ if (enableCreateEventHandleAPI) {
 
 function registerSimpleEvent(domEventName, reactName) {
   topLevelEventsToReactNames.set(domEventName, reactName);
+  // onClick
   registerTwoPhaseEvent(reactName, [domEventName]);
 }
 
@@ -120,6 +121,7 @@ export function registerSimpleEvents() {
     const eventName = ((simpleEventPluginEvents[i]: any): string);
     const domEventName = ((eventName.toLowerCase(): any): DOMEventName);
     const capitalizedEvent = eventName[0].toUpperCase() + eventName.slice(1);
+    // onClick
     registerSimpleEvent(domEventName, 'on' + capitalizedEvent);
   }
   // Special cases where event names don't match.

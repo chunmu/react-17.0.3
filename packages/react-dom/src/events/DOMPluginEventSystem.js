@@ -85,11 +85,12 @@ type DispatchEntry = {|
 export type DispatchQueue = Array<DispatchEntry>;
 
 // TODO: remove top-level side effect.
+// 推入事件合集 注册事件
 SimpleEventPlugin.registerEvents();
 EnterLeaveEventPlugin.registerEvents();
 ChangeEventPlugin.registerEvents();
 SelectEventPlugin.registerEvents();
-BeforeInputEventPlugin.registerEvents();
+BeforeInputEventPlugin.registerEvents(); // 两个文件相互引用 accumulateTwoPhaseListeners
 
 function extractEvents(
   dispatchQueue: DispatchQueue,
@@ -324,7 +325,7 @@ export function listenToNonDelegatedEvent(
 export function listenToNativeEvent(
   domEventName: DOMEventName,
   isCapturePhaseListener: boolean,
-  target: EventTarget,
+  target: EventTarget, // 这边的target的意思是  作为绑定的目标 事件委托的目标
 ): void {
   if (__DEV__) {
     if (nonDelegatedEvents.has(domEventName) && !isCapturePhaseListener) {
@@ -380,13 +381,14 @@ const listeningMarker =
   Math.random()
     .toString(36)
     .slice(2);
-
+// rootContainerElement = div或者document
 export function listenToAllSupportedEvents(rootContainerElement: EventTarget) {
   if (!(rootContainerElement: any)[listeningMarker]) {
     (rootContainerElement: any)[listeningMarker] = true;
     allNativeEvents.forEach(domEventName => {
       // We handle selectionchange separately because it
       // doesn't bubble and needs to be on the document.
+      // selectionchange这个时间比较特殊 文案选中事件 需要单独处理
       if (domEventName !== 'selectionchange') {
         if (!nonDelegatedEvents.has(domEventName)) {
           listenToNativeEvent(domEventName, false, rootContainerElement);
@@ -394,6 +396,7 @@ export function listenToAllSupportedEvents(rootContainerElement: EventTarget) {
         listenToNativeEvent(domEventName, true, rootContainerElement);
       }
     });
+    // ownerDocument dom对象属性 可以获取到document对象
     const ownerDocument =
       (rootContainerElement: any).nodeType === DOCUMENT_NODE
         ? rootContainerElement
@@ -410,12 +413,13 @@ export function listenToAllSupportedEvents(rootContainerElement: EventTarget) {
 }
 
 function addTrappedEventListener(
-  targetContainer: EventTarget,
-  domEventName: DOMEventName,
+  targetContainer: EventTarget, // dom document.getElementById('root')
+  domEventName: DOMEventName, // click
   eventSystemFlags: EventSystemFlags,
   isCapturePhaseListener: boolean,
   isDeferredListenerForLegacyFBSupport?: boolean,
 ) {
+  // 给不同的事件放置不同权限的配置
   let listener = createEventListenerWrapperWithPriority(
     targetContainer,
     domEventName,

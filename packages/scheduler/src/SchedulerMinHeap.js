@@ -13,6 +13,10 @@ type Node = {|
   sortIndex: number,
 |};
 
+// 最小堆排序
+// taskQueue和timerQueue, 它们都是以最小堆的形式进行存储, 
+// 这样就能保证以O(1)的时间复杂度, 取到数组顶端的对象(优先级最高的 task)
+
 export function push(heap: Heap, node: Node): void {
   const index = heap.length;
   heap.push(node);
@@ -36,10 +40,19 @@ export function pop(heap: Heap): Node | null {
   return first;
 }
 
+// arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 3]
+// push(3)
+// arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 3]
+// 1. index = length = 11
+// 2. parentIndex = 10 = 1011 >>> 1 = 0101 = 5
+// 3. arr[5] = 6 > 3
+// 4. index = 5  arr = [1, 2, 3, 4, 5, 3, 7, 8, 9, 10, 6]
+// 5. parentIndex = 4 >>> 1 = 100 >>> 1 = 010 = 2
+// 6. arr[2] = 2 < 3
 function siftUp(heap, node, i) {
   let index = i;
   while (index > 0) {
-    const parentIndex = (index - 1) >>> 1;
+    const parentIndex = (index - 1) >>> 1; // 无符号右移1位
     const parent = heap[parentIndex];
     if (compare(parent, node) > 0) {
       // The parent is larger. Swap positions.

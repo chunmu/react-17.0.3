@@ -108,6 +108,7 @@ export type DOMEventName =
   | 'waiting'
   | 'wheel';
 
+// 浏览器兼容的事件处理
 export const ANIMATION_END: DOMEventName = getVendorPrefixedEventName(
   'animationend',
 );

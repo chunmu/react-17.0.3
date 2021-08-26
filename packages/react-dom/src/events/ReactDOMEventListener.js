@@ -371,7 +371,12 @@ export function getEventPriority(domEventName: DOMEventName): * {
     case 'mouseleave':
     case 'pointerenter':
     case 'pointerleave':
-      return ContinuousEventPriority;
+      return ContinuousEventPriority; // 离散事件权限
+    // 暂停 JS 执行，将主线程还给浏览器，让浏览器有机会更新页面
+    // 在未来某个时刻继续调度任务，执行上次还没有完成的任务
+    // 要满足这两点就需要调度一个宏任务，因为宏任务是在下次事件循环中执行，不会阻塞本次页面更新
+    // 而微任务是在本次页面更新前执行，与同步执行无异，不会让出主线程。
+    // scheduler调度器用message来控制调度
     case 'message': {
       // We might be in the Scheduler callback.
       // Eventually this mechanism will be replaced by a check

@@ -36,7 +36,9 @@ export function registerTwoPhaseEvent(
   registrationName: string,
   dependencies: Array<DOMEventName>,
 ): void {
+  // 冒泡阶段的
   registerDirectEvent(registrationName, dependencies);
+  // 捕获阶段的
   registerDirectEvent(registrationName + 'Capture', dependencies);
 }
 
@@ -54,6 +56,7 @@ export function registerDirectEvent(
     }
   }
 
+  // onClick = ['click']
   registrationNameDependencies[registrationName] = dependencies;
 
   if (__DEV__) {
@@ -66,6 +69,7 @@ export function registerDirectEvent(
   }
 
   for (let i = 0; i < dependencies.length; i++) {
+    // allNativeEvents 来源
     allNativeEvents.add(dependencies[i]);
   }
 }
