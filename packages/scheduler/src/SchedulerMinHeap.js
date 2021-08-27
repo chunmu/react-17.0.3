@@ -63,6 +63,7 @@ export function pop(heap: Heap): Node | null {
 // 然后和父元素比对 交换位置 确保顶层最小  最小堆
 // 最小堆的概念是顶层元素最小
 // 对应react应用场景就是  权限最高 优先级最高的任务放第一个
+// 只能保证任何一块树形中  顶层最小  不能保证平级树型中元素大小
 function siftUp(heap, node, i) {
   let index = i;
   while (index > 0) {
@@ -80,29 +81,34 @@ function siftUp(heap, node, i) {
   }
 }
 
+// siftDown(heap, last, 0);
 function siftDown(heap, node, i) {
   let index = i;
   const length = heap.length;
   const halfLength = length >>> 1;
   while (index < halfLength) {
-    const leftIndex = (index + 1) * 2 - 1;
+    const leftIndex = (index + 1) * 2 - 1; // 1
     const left = heap[leftIndex];
     const rightIndex = leftIndex + 1;
     const right = heap[rightIndex];
 
     // If the left or right node is smaller, swap with the smaller of those.
+    // arr[1] < arr[0] 
     if (compare(left, node) < 0) {
+      // arr[2] < arr[1]
       if (rightIndex < length && compare(right, left) < 0) {
-        heap[index] = right;
-        heap[rightIndex] = node;
+        heap[index] = right; // 直接把最小的调前面
+        heap[rightIndex] = node; // 调换 越过中间的调换
         index = rightIndex;
       } else {
+        // arr[2] > arr[1]  [0]和[1]调换 都是确保第一个最小 两个子树都是下面树的最顶层  既然它最小了 那就确实最小了
         heap[index] = left;
         heap[leftIndex] = node;
         index = leftIndex;
       }
+      // arr[1] > arr[0]   arr[2] < arr[0]
     } else if (rightIndex < length && compare(right, node) < 0) {
-      heap[index] = right;
+      heap[index] = right; // arr[0] arr[2]交换
       heap[rightIndex] = node;
       index = rightIndex;
     } else {
