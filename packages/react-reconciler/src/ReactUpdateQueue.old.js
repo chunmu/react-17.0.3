@@ -165,9 +165,14 @@ if (__DEV__) {
 export function initializeUpdateQueue<State>(fiber: Fiber): void {
   const queue: UpdateQueue<State> = {
     baseState: fiber.memoizedState,
-    firstBaseUpdate: null,
-    lastBaseUpdate: null,
+    firstBaseUpdate: null, // 上一个更新流程中被跳过的开头位置的update  有可能跳过多个update 他们自成一段链条
+    lastBaseUpdate: null, // 上一个更新流程中跳过的结尾位置的update  
     shared: {
+      // 指向最新 且它是一个完整的环状链条
+      //          A1 → A2 → A3
+      //          ↑           ↓
+      //  pending(A6)   ← A5 ← A4 
+      // pending 是一个完整的Queue
       pending: null,
       interleaved: null,
       lanes: NoLanes,
@@ -205,14 +210,14 @@ export function createUpdate(eventTime: number, lane: Lane): Update<*> {
     payload: null,
     callback: null,
 
-    next: null,
+    next: null, // 单链结构的关键指针 next指向下一个节点
   };
   return update;
 }
 
 export function enqueueUpdate<State>(
   fiber: Fiber,
-  update: Update<State>,
+  update: Update<State>, // = A5
   lane: Lane,
 ) {
   const updateQueue = fiber.updateQueue;
@@ -237,15 +242,19 @@ export function enqueueUpdate<State>(
     }
     sharedQueue.interleaved = update;
   } else {
+    // 拿到当前的最新的update
     const pending = sharedQueue.pending;
     if (pending === null) {
       // This is the first update. Create a circular list.
+      // 如果是第一个更新 创建一个环状单链 且只有一个元素 自己的next指向自己
       update.next = update;
     } else {
-      update.next = pending.next;
-      pending.next = update;
+      // 假设已有的 A1 => A2 => A3 => A4 => A1
+      //  不是第一次 此次进来的update是最新的 pending
+      update.next = pending.next; // A5 => A1
+      pending.next = update; // A4 => A5
     }
-    sharedQueue.pending = update;
+    sharedQueue.pending = update; // pending = A5
   }
 
   if (__DEV__) {
@@ -454,6 +463,7 @@ function getStateFromUpdate<State>(
   return prevState;
 }
 
+// A1 A2 B1 B2 数字代表权限 字母代表更新任务 数字越小越优先 明白了
 export function processUpdateQueue<State>(
   workInProgress: Fiber,
   props: any,
@@ -462,33 +472,59 @@ export function processUpdateQueue<State>(
 ): void {
   // This is always non-null on a ClassComponent or HostRoot
   const queue: UpdateQueue<State> = (workInProgress.updateQueue: any);
+  // 第一次更新的baseState 是空字符串，更新队列如下，字母表示state，数字表示优先级。优先级是1 > 2的
 
-  hasForceUpdate = false;
+  // A1 - B1 - C2 - D1 - E2
+  
+  // 第一次的渲染优先级（renderLanes）为 1，Updates是本次会被处理的队列:
+  // Base state: ''
+  // Updates: [A1, B1, D1]      <- 第一个被跳过的update为C2，此时的baseUpdate队列为[C2, D1, E2]，
+  //                             它之前所有被处理的update的结果是AB。此时记录下baseState = 'AB'
+  //                             注意！再次跳过低优先级的update(E2)时，则不会记录baseState
+                              
+  // Result state: 'ABD'--------------------------------------------------------------------------------------------------
+  
+  
+  // 第二次的渲染优先级（renderLanes）为 2，Updates是本次会被处理的队列:
+  // Base state: 'AB'           <- 再次发起调度时，取出上次更新遗留的baseUpdate队列，基于baseState
+  //                             计算结果。
+                              
+  // Updates: [C2, D1, E2] Result state: 'ABCDE'
+  // hasForceUpdate = false;
 
   if (__DEV__) {
     currentlyProcessingQueue = queue.shared;
   }
 
-  let firstBaseUpdate = queue.firstBaseUpdate;
+  //假设上一轮任务 A1  A3  A2  A4  那么firstBaseUpdate = A3  lastBaseUpdate = A4 他们中间有个短链 A3 => A2 => A4
+  let firstBaseUpdate = queue.firstBaseUpdate; 
   let lastBaseUpdate = queue.lastBaseUpdate;
 
   // Check if there are pending updates. If so, transfer them to the base queue.
-  let pendingQueue = queue.shared.pending;
+  let pendingQueue = queue.shared.pending; // 拿到最新的 它含有next 一条完整的环状链条
   if (pendingQueue !== null) {
-    queue.shared.pending = null;
+    queue.shared.pending = null; // pending先置空
 
     // The pending queue is circular. Disconnect the pointer between first
     // and last so that it's non-circular.
-    const lastPendingUpdate = pendingQueue;
-    const firstPendingUpdate = lastPendingUpdate.next;
-    lastPendingUpdate.next = null;
+    const lastPendingUpdate = pendingQueue; // 环状最后那个 最新那个
+    const firstPendingUpdate = lastPendingUpdate.next; // 环状最前那个  最旧那个
+    lastPendingUpdate.next = null; // 断开了最后和最新的链接 打断了环状单链
     // Append pending updates to base queue
+    // 如果初始化  
     if (lastBaseUpdate === null) {
-      firstBaseUpdate = firstPendingUpdate;
+      // firstBaseUpdate = A1 相当于整个链条都是跳过的更新，上一次跳过的第一个位置就是这整个链条的第一个
+      firstBaseUpdate = firstPendingUpdate; // 直接先放在最旧的更新的位置 所有都是跳过的
     } else {
+      // 非初始化 firstBaseUpdate已经有值了 一定有lastBaseUpdate  让它指向最旧的 衔接  
+      // [firstBaseUpdate, lastBaseUpdate] = A3(firstBaseUpdate) => A2 => A4(lastBaseUpdate)
+      // 需要转换成 => [firstBaseUpdate, lastBaseUpdate] 
+      // =>  A3(firstBaseUpdate) => A2 => A4(lastBaseUpdate) => A5(lastBaseUpdate.next=A4.next)
       lastBaseUpdate.next = firstPendingUpdate;
     }
-    lastBaseUpdate = lastPendingUpdate;
+    //  A3(firstBaseUpdate) => A2 => A4 => A5(A4.next)
+    // lastBaseUpdate = A5
+    lastBaseUpdate = lastPendingUpdate; // lastBaseUpdate先指向
 
     // If there's a current queue, and it's different from the base queue, then
     // we need to transfer the updates to that queue, too. Because the base
@@ -514,6 +550,7 @@ export function processUpdateQueue<State>(
   // These values may change as we process the queue.
   if (firstBaseUpdate !== null) {
     // Iterate through the list of updates to compute the result.
+    // 获取前一次计算的值 可能是所有计算之后的 也可能是有跳过的update部分计算的
     let newState = queue.baseState;
     // TODO: Don't need to accumulate this. Instead, we can remove renderLanes
     // from the original lanes.
@@ -541,6 +578,7 @@ export function processUpdateQueue<State>(
 
           next: null,
         };
+        // 第一轮会走这里
         if (newLastBaseUpdate === null) {
           newFirstBaseUpdate = newLastBaseUpdate = clone;
           newBaseState = newState;
@@ -552,6 +590,7 @@ export function processUpdateQueue<State>(
       } else {
         // This update does have sufficient priority.
 
+        // 优先级高 但是在断链中 但是又优先级高需要及时计算 那么久先计算 且截取出来下次还参与计算 不过计算的基础值要控制好
         if (newLastBaseUpdate !== null) {
           const clone: Update<State> = {
             eventTime: updateEventTime,
