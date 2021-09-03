@@ -380,6 +380,7 @@ export function requestUpdateLane(fiber: Fiber): Lane {
     // This behavior is only a fallback. The flag only exists until we can roll
     // out the setState warning, since existing code might accidentally rely on
     // the current behavior.
+    window.console.log('workInProgressRootRenderLanes', workInProgressRootRenderLanes)
     return pickArbitraryLane(workInProgressRootRenderLanes);
   }
 

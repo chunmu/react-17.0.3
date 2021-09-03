@@ -230,6 +230,8 @@ export function isValidContainer(node: any): boolean {
   );
 }
 
+// 应用容器 
+// <div id=root>
 // TODO: Remove this function which also includes comment nodes.
 // We only use it in places that are currently more relaxed.
 export function isValidContainerLegacy(node: any): boolean {

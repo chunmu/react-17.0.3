@@ -139,7 +139,7 @@ function getContextForSubtree(
     return emptyContextObject;
   }
 
-  const fiber = getInstance(parentComponent);
+  const fiber = getInstance(parentComponent); // _reactInternals
   const parentContext = findCurrentUnmaskedContext(fiber);
 
   if (fiber.tag === ClassComponent) {
@@ -249,7 +249,7 @@ export function createContainer(
   concurrentUpdatesByDefaultOverride: null | boolean,
 ): OpaqueRoot {
   return createFiberRoot(
-    containerInfo,
+    containerInfo, // div
     tag,
     hydrate,
     hydrationCallbacks,
@@ -259,7 +259,7 @@ export function createContainer(
 }
 
 export function updateContainer(
-  element: ReactNodeList,
+  element: ReactNodeList, // children
   container: OpaqueRoot,
   parentComponent: ?React$Component<any, any>,
   callback: ?Function,
