@@ -154,8 +154,8 @@ function warnOnInvalidCallback(callback: mixed, callerName: string): void {
 
 // 挂载子树到容器节点
 function legacyRenderSubtreeIntoContainer(
-  parentComponent: ?React$Component<any, any>,
-  children: ReactNodeList, // ReactNode
+  parentComponent: ?React$Component<any, any>, // null
+  children: ReactNodeList, // App
   container: Container, // dom
   forceHydrate: boolean,
   callback: ?Function,
@@ -167,9 +167,8 @@ function legacyRenderSubtreeIntoContainer(
 
   let root = container._reactRootContainer; // root = _reactRootContainer
   let fiberRoot: FiberRoot;
-  // 整个应用的起点
-  // 包含应用挂载的目标节点
-  // 记录整个应用更新过程的各种信息
+
+  // rootFiber fiberRoot
   if (!root) {
     // Initial mount
     root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
@@ -275,11 +274,9 @@ export function hydrate(
   );
 }
 
-// 入口方法 rander render(<div></div>, {})
-// 创建react整个应用顶点对象
 export function render(
-  element: React$Element<any>,
-  container: Container,
+  element: React$Element<any>, // jsx编译出来的 React$Element Root
+  container: Container, // document.getElementById('root') div=root
   callback: ?Function,
 ) {
   if (__DEV__) {

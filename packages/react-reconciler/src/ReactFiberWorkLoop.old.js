@@ -343,11 +343,16 @@ export function getWorkInProgressRoot(): FiberRoot | null {
 }
 
 export function requestEventTime() {
+  // NoContext = 0b0000
+//   const BatchedContext = /*               */ 0b0001;
+// const RenderContext = /*                */ 0b0010;
+// const CommitContext = /*                */ 0b0100;
   if ((executionContext & (RenderContext | CommitContext)) !== NoContext) {
     // We're inside React, so it's fine to read the actual time.
     return now();
   }
   // We're not inside React, so we may be in the middle of a browser event.
+  // NoTimestamp = -1
   if (currentEventTime !== NoTimestamp) {
     // Use the same start time for all updates until we enter React again.
     return currentEventTime;
@@ -380,6 +385,7 @@ export function requestUpdateLane(fiber: Fiber): Lane {
     // This behavior is only a fallback. The flag only exists until we can roll
     // out the setState warning, since existing code might accidentally rely on
     // the current behavior.
+    window.console.log('workInProgressRootRenderLanes', workInProgressRootRenderLanes)
     return pickArbitraryLane(workInProgressRootRenderLanes);
   }
 

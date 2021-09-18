@@ -558,6 +558,7 @@ function forceFrameRate(fps) {
   }
 }
 
+// 开始进行任务单元
 const performWorkUntilDeadline = () => {
   // scheduledHostCallback=flushWork
   if (scheduledHostCallback !== null) {

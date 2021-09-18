@@ -107,7 +107,7 @@ const bundles = [
     global: 'JSXRuntime',
     externals: ['react', 'ReactNativeInternalFeatureFlags'],
   },
-
+  
   /******* React JSX DEV Runtime *******/
   {
     bundleTypes: [
