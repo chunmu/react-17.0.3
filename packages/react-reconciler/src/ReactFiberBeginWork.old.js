@@ -3699,6 +3699,7 @@ function beginWork(
         workInProgress.elementType === Component
           ? unresolvedProps
           : resolveDefaultProps(Component, unresolvedProps);
+      // 可以确定是初始化 resolveDefaultProps
       return updateFunctionComponent(
         current,
         workInProgress,

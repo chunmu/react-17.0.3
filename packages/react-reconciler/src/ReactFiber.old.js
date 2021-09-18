@@ -216,6 +216,7 @@ const createFiber = function(
 
 function shouldConstruct(Component: Function) {
   const prototype = Component.prototype;
+  // 判断是不是classComponent false的话就是function Component
   return !!(prototype && prototype.isReactComponent);
 }
 
@@ -578,6 +579,7 @@ export function createFiberFromTypeAndProps(
   }
 
   const fiber = createFiber(fiberTag, pendingProps, key, mode);
+  // 同时赋值了type
   fiber.elementType = type;
   fiber.type = resolvedType;
   fiber.lanes = lanes;
